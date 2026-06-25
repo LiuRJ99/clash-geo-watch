@@ -1,0 +1,138 @@
+# Clash Geo Watch 配置文件
+# 所有时间单位为秒
+
+# 代理检测配置
+proxy:
+  # Clash Verge 代理端口地址
+  url: "http://127.0.0.1:7897"
+  
+  # 目标国家代码（ISO 3166-1 alpha-2）
+  expected_country: "US"
+  
+  # 正常情况下的检测间隔（秒）
+  # 默认 3600 秒 = 1 小时
+  interval_seconds: 3600
+  
+  # 连续异常次数阈值，达到后触发自动切换
+  # 默认 3 次
+  bad_threshold: 1
+  
+  # 异常情况下的检测间隔（秒）
+  # 默认 60 秒 = 1 分钟
+  abnormal_check_interval_seconds: 60
+  
+  # 日志文件路径
+  log_file: "clash_geo_watch.log"
+
+# 检测时间范围配置
+schedule:
+  # 是否启用时间范围限制
+  enabled: true
+  
+  # 检测开始时间（24小时制）
+  start_hour: 10
+  
+  # 检测结束时间（24小时制）
+  end_hour: 17
+
+# Clash API 配置
+clash_api:
+  # Clash External Controller 地址
+  url: "http://127.0.0.1:9097"
+  
+  # API 密钥（如果未设置可留空）
+  secret: "12345678"
+  
+  # 代理组名称（在 Clash Verge 中显示的名称）
+  proxy_group: "🚀 节点选择"
+  
+  # 是否启用自动切换功能
+  auto_switch: true
+
+# 自动切换配置
+auto_switch:
+  # 启动时是否自动筛选合格节点
+  # 开启后，程序启动时会检查当前节点是否合格，不合格则自动切换
+  startup_check: false
+  
+  # 最大尝试切换次数
+  # 达到此次数后触发提醒，要求手动切换
+  max_attempts: 3
+  
+  # 每次切换尝试的间隔时间（秒）
+  # 默认 300 秒 = 5 分钟
+  interval_seconds: 300
+  
+  # 切换后等待检测的时间（秒）
+  switch_test_sleep_seconds: 3
+
+# 节点过滤配置
+node_filter:
+  # 延迟阈值（毫秒）
+  # 超过此延迟的节点会被过滤掉，当前节点超阈值会触发切换
+  latency_threshold_ms: 500
+  
+  # 目标节点关键词列表
+  # 节点名包含任一关键词即被认为是目标节点
+  # 修改此处可切换到其他地区节点（如日本、新加坡等）
+  target_node_keywords:
+    - "美国"
+    - "美國"
+    - "US"
+    - "USA"
+    - "United States"
+    - "America"
+    - "Los Angeles"
+    - "LA"
+    - "San Jose"
+    - "Silicon Valley"
+    - "New York"
+    - "Seattle"
+    - "Dallas"
+    - "🇺🇸"
+
+# 服务可达性检测配置
+service_check:
+  # 核心服务列表
+  # 用于检测代理节点是否能正常访问这些服务
+  targets:
+    # Google / Gemini / Antigravity
+    - name: "Google"
+      url: "https://www.google.com/generate_204"
+    - name: "Gemini"
+      url: "https://gemini.google.com/"
+    - name: "Google AI Studio"
+      url: "https://aistudio.google.com/"
+    - name: "Antigravity"
+      url: "https://antigravity.google/"
+    
+    # OpenAI / ChatGPT / Codex
+    - name: "ChatGPT"
+      url: "https://chatgpt.com/"
+    - name: "Codex"
+      url: "https://chatgpt.com/codex"
+    - name: "OpenAI API"
+      url: "https://api.openai.com/"
+    - name: "OpenAI Platform"
+      url: "https://platform.openai.com/"
+    
+    # Claude / Anthropic
+    - name: "Claude"
+      url: "https://claude.ai/"
+    - name: "Claude Platform"
+      url: "https://platform.claude.com/"
+    - name: "Anthropic API"
+      url: "https://api.anthropic.com/"
+
+    # GitHub Core
+    - name: "GitHub"
+      url: "https://github.com/"
+    - name: "GitHub Raw"
+      url: "https://raw.githubusercontent.com/"
+  
+  # 最少需要可达的服务数量
+  # 低于此数量认为节点不合格
+  min_ok_count: 4
+  
+  # 单个服务检测超时时间（秒）
+  timeout: 12
