@@ -3,7 +3,7 @@
 import urllib.parse
 import requests
 
-from .config import CLASH_API, CLASH_SECRET, PROXY_GROUP, TARGET_NODE_KEYWORDS, LATENCY_THRESHOLD_MS
+from .config import CLASH_API, CLASH_SECRET, PROXY_GROUP, TARGET_NODE_KEYWORDS, LATENCY_MIN_THRESHOLD_MS, LATENCY_MAX_THRESHOLD_MS
 from .utils import log, now
 
 
@@ -135,9 +135,12 @@ def clash_get_us_candidates():
             if delay == 0:
                 is_usable = False
                 reason = f"delay=0 (Timeout)"
-            elif delay > LATENCY_THRESHOLD_MS:
+            elif delay < LATENCY_MIN_THRESHOLD_MS:
                 is_usable = False
-                reason = f"delay={delay}ms > {LATENCY_THRESHOLD_MS}ms"
+                reason = f"delay={delay}ms < {LATENCY_MIN_THRESHOLD_MS}ms (太低，可能是假节点)"
+            elif delay > LATENCY_MAX_THRESHOLD_MS:
+                is_usable = False
+                reason = f"delay={delay}ms > {LATENCY_MAX_THRESHOLD_MS}ms"
         
         if is_usable:
             filtered_candidates.append(node_name)

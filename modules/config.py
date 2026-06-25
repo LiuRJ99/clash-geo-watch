@@ -47,7 +47,8 @@ def load_config():
             "switch_test_sleep_seconds": 3
         },
         "node_filter": {
-            "latency_threshold_ms": 500,
+            "latency_min_threshold_ms": 50,
+            "latency_max_threshold_ms": 500,
             "target_node_keywords": [
                 "美国", "美國", "US", "USA", "United States", "America",
                 "Los Angeles", "LA", "San Jose", "Silicon Valley",
@@ -125,7 +126,8 @@ AUTO_SWITCH_MAX_ATTEMPTS = CONFIG["auto_switch"]["max_attempts"]
 AUTO_SWITCH_INTERVAL_SECONDS = CONFIG["auto_switch"]["interval_seconds"]
 SWITCH_TEST_SLEEP_SECONDS = CONFIG["auto_switch"]["switch_test_sleep_seconds"]
 
-LATENCY_THRESHOLD_MS = CONFIG["node_filter"]["latency_threshold_ms"]
+LATENCY_MIN_THRESHOLD_MS = CONFIG["node_filter"]["latency_min_threshold_ms"]
+LATENCY_MAX_THRESHOLD_MS = CONFIG["node_filter"]["latency_max_threshold_ms"]
 TARGET_NODE_KEYWORDS = CONFIG["node_filter"]["target_node_keywords"]
 
 CRITICAL_SERVICE_TARGETS = CONFIG["service_check"]["targets"]

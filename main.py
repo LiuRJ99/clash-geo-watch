@@ -19,7 +19,8 @@ from modules import (
     AUTO_SWITCH_STARTUP_CHECK,
     AUTO_SWITCH_MAX_ATTEMPTS,
     AUTO_SWITCH_INTERVAL_SECONDS,
-    LATENCY_THRESHOLD_MS,
+    LATENCY_MIN_THRESHOLD_MS,
+    LATENCY_MAX_THRESHOLD_MS,
     TARGET_NODE_KEYWORDS,
     CRITICAL_SERVICE_TARGETS,
     MIN_CRITICAL_SERVICE_OK,
@@ -153,7 +154,7 @@ def main():
                         log(f"[{now()}] ⚠️ 启动检查: 未找到合格节点，使用当前节点")
                 else:
                     # 关闭：按原逻辑检查当前节点情况
-                    is_node_ok = ok and service_ok_count >= MIN_CRITICAL_SERVICE_OK and startup_node_latency <= LATENCY_THRESHOLD_MS
+                    is_node_ok = ok and service_ok_count >= MIN_CRITICAL_SERVICE_OK and LATENCY_MIN_THRESHOLD_MS <= startup_node_latency <= LATENCY_MAX_THRESHOLD_MS
                     
                     if is_node_ok:
                         log(f"[{now()}] ✅ 启动检查: 当前节点合格")
@@ -163,8 +164,10 @@ def main():
                             log(f"[{now()}]    ❌ GeoIP 不符合要求 (期望: {EXPECTED_COUNTRY})")
                         if service_ok_count < MIN_CRITICAL_SERVICE_OK:
                             log(f"[{now()}]    ❌ 服务可达性不足 ({service_ok_count}/{MIN_CRITICAL_SERVICE_OK})")
-                        if startup_node_latency > LATENCY_THRESHOLD_MS:
-                            log(f"[{now()}]    ❌ 延迟超阈值 ({startup_node_latency}ms > {LATENCY_THRESHOLD_MS}ms)")
+                        if startup_node_latency < LATENCY_MIN_THRESHOLD_MS and startup_node_latency > 0:
+                            log(f"[{now()}]    ❌ 延迟太低 ({startup_node_latency}ms < {LATENCY_MIN_THRESHOLD_MS}ms，可能是假节点)")
+                        if startup_node_latency > LATENCY_MAX_THRESHOLD_MS:
+                            log(f"[{now()}]    ❌ 延迟超阈值 ({startup_node_latency}ms > {LATENCY_MAX_THRESHOLD_MS}ms)")
                 
                 # 记录节点信息
                 log_node_info(
@@ -204,10 +207,14 @@ def main():
                 latency_icon = "❌"
                 latency_color = ""
                 latency_status = "Timeout"
-            elif node_latency > LATENCY_THRESHOLD_MS:
+            elif node_latency < LATENCY_MIN_THRESHOLD_MS:
                 latency_icon = "⚠️"
                 latency_color = ""
-                latency_status = f"{node_latency}ms (>{LATENCY_THRESHOLD_MS}ms)"
+                latency_status = f"{node_latency}ms (<{LATENCY_MIN_THRESHOLD_MS}ms，可能是假节点)"
+            elif node_latency > LATENCY_MAX_THRESHOLD_MS:
+                latency_icon = "⚠️"
+                latency_color = ""
+                latency_status = f"{node_latency}ms (>{LATENCY_MAX_THRESHOLD_MS}ms)"
             else:
                 # 颜色标识：绿色 <200ms，蓝色 <400ms，橙色 >=400ms
                 if node_latency < 200:
@@ -228,15 +235,25 @@ def main():
                 log(f"   分组: {node_group}")
             else:
                 log(f"🏷️  当前节点: {node_name}")
-            log(f"   延迟: {latency_color} {latency_icon} {latency_status} (阈值: {LATENCY_THRESHOLD_MS}ms)")
+            log(f"   延迟: {latency_color} {latency_icon} {latency_status} (阈值: {LATENCY_MIN_THRESHOLD_MS}-{LATENCY_MAX_THRESHOLD_MS}ms)")
             
-            # 检查是否需要因延迟超阈值而切换
+            # 检查是否需要因延迟异常而切换
             switched_by_latency = False
-            if node_latency > LATENCY_THRESHOLD_MS and AUTO_SWITCH:
-                log(f"[{now()}] ⚠️ 节点延迟 {node_latency}ms 超过阈值 {LATENCY_THRESHOLD_MS}ms，触发自动切换...")
+            need_switch = False
+            switch_reason = ""
+            
+            if node_latency < LATENCY_MIN_THRESHOLD_MS and node_latency > 0:
+                need_switch = True
+                switch_reason = f"延迟 {node_latency}ms 低于最小阈值 {LATENCY_MIN_THRESHOLD_MS}ms（可能是假节点）"
+            elif node_latency > LATENCY_MAX_THRESHOLD_MS:
+                need_switch = True
+                switch_reason = f"延迟 {node_latency}ms 超过最大阈值 {LATENCY_MAX_THRESHOLD_MS}ms"
+            
+            if need_switch and AUTO_SWITCH:
+                log(f"[{now()}] ⚠️ {switch_reason}，触发自动切换...")
                 switched = auto_switch_to_good_us_node()
                 if switched:
-                    log(f"[{now()}] ✅ 因延迟超阈值，自动切换成功")
+                    log(f"[{now()}] ✅ 因延迟异常，自动切换成功")
                     bad_count = 0
                     switched_by_latency = True
                     # 获取切换后的节点信息
@@ -244,13 +261,13 @@ def main():
                     node_name = node_info.get("name", "N/A")
                     node_group = node_info.get("group")
                     node_latency = node_info.get("latency_ms", 0)
-                    latency_icon = "✅" if node_latency <= LATENCY_THRESHOLD_MS else "⚠️"
+                    latency_icon = "✅" if LATENCY_MIN_THRESHOLD_MS <= node_latency <= LATENCY_MAX_THRESHOLD_MS else "⚠️"
                     latency_status = f"{node_latency}ms"
                     log(f"{'='*60}")
                     log(f"🏷️  切换后节点: {node_name}")
                     if node_group:
                         log(f"   分组: {node_group}")
-                    log(f"   延迟: {latency_icon} {latency_status} (阈值: {LATENCY_THRESHOLD_MS}ms)")
+                    log(f"   延迟: {latency_icon} {latency_status} (阈值: {LATENCY_MAX_THRESHOLD_MS}ms)")
                     
                     # 记录切换后的节点信息（复用当前检测结果）
                     log_node_info(

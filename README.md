@@ -94,7 +94,8 @@ auto_switch:
 
 # 节点过滤配置
 node_filter:
-  latency_threshold_ms: 300
+  latency_min_threshold_ms: 150
+  latency_max_threshold_ms: 500
   target_node_keywords:
     - "美国"
     - "US"
@@ -219,13 +220,15 @@ kill 进程号
 
 | 配置项 | 默认值 | 说明 |
 |--------|--------|------|
-| `latency_threshold_ms` | `300` | 延迟阈值（毫秒），超过会触发切换 |
+| `latency_min_threshold_ms` | `150` | 最小延迟阈值（毫秒），低于此值可能是假节点 |
+| `latency_max_threshold_ms` | `500` | 最大延迟阈值（毫秒），超过会触发切换 |
 | `target_node_keywords` | `["美国", "US", "🇺🇸", ...]` | 目标节点关键词 |
 
 **节点过滤规则：**
 - 自动跳过 `alive=False` 的节点（Error 状态）
 - 自动跳过 `delay=0` 的节点（Timeout 状态）
-- 自动跳过 `delay > latency_threshold_ms` 的节点
+- 自动跳过 `delay < latency_min_threshold_ms` 的节点（可能是假节点）
+- 自动跳过 `delay > latency_max_threshold_ms` 的节点（太慢）
 - 按延迟从小到大排序，优先尝试低延迟节点
 
 ### service_check - 服务检测配置
@@ -244,7 +247,7 @@ kill 进程号
 ============================================================
 🏷️  当前节点: 🇺🇸美国04 | 合适下载使用-0.01倍
    分组: 🇺🇸 美国自动选择
-   延迟: 🟢 ✅ 158ms (阈值: 300ms)
+   延迟: 🟢 ✅ 158ms (阈值: 150-500ms)
 ============================================================
 📍 GeoIP 检测 (期望: US)
    投票: ✅ 3 / ❌ 1

@@ -68,9 +68,13 @@ auto_switch:
 
 # 节点过滤配置
 node_filter:
-  # 延迟阈值（毫秒）
+  # 延迟最小阈值（毫秒）
+  # 低于此延迟的节点会被过滤掉（可能是假节点或质量差）
+  latency_min_threshold_ms: 150
+  
+  # 延迟最大阈值（毫秒）
   # 超过此延迟的节点会被过滤掉，当前节点超阈值会触发切换
-  latency_threshold_ms: 500
+  latency_max_threshold_ms: 500
   
   # 目标节点关键词列表
   # 节点名包含任一关键词即被认为是目标节点
